@@ -54,7 +54,7 @@ function Login() {
           />
         </div>
 
-        <button type="submit">Se connecter</button>
+        <button type="submit" className="btn-primary">Se connecter</button>
       </form>
     </div>
   );

@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { restaurantName, email, password } = req.body;
 
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "Cet utilisateur existe déjà" });
@@ -13,7 +13,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     user = new User({
-      username,
+      restaurantName,
       email,
       password: hashedPassword
     });
@@ -22,7 +22,14 @@ exports.register = async (req, res) => {
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-    res.status(201).json({ token, user: { id: user._id, username: user.username } });
+    res.status(201).json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        restaurantName: user.restaurantName,
+        email: user.email
+      } 
+    });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur lors de l'inscription" });
   }
@@ -48,7 +55,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        username: user.username,
+        restaurantName: user.restaurantName,
         email: user.email
       }
     });

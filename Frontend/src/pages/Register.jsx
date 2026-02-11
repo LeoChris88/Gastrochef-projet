@@ -66,7 +66,7 @@ function Register() {
           />
         </div>
 
-        <button type="submit">Créer un compte</button>
+        <button type="submit" className="btn-primary">Créer un compte</button>
       </form>
     </div>
   );
