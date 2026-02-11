@@ -36,7 +36,7 @@ exports.register = async (req, res) => {
 
     console.log('Création de l\'utilisateur...');
     user = new User({
-      restaurantName: finalUsername,
+      username: finalUsername,
       email,
       password: hashedPassword
     });
@@ -52,7 +52,7 @@ exports.register = async (req, res) => {
       token, 
       user: { 
         id: user._id, 
-        restaurantName: user.restaurantName,
+        username: user.username,
         email: user.email
       } 
     });
@@ -93,7 +93,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        restaurantName: user.restaurantName,
+        username: user.username,
         email: user.email
       }
     });
