@@ -39,7 +39,7 @@ exports.register = async (req, res) => {
       username: finalUsername,
       email,
       password: hashedPassword
-    });
+    }); 
 
     console.log('Sauvegarde en base...');
     await user.save();

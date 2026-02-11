@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 
 function Register() {
-  const [restaurantName, setRestaurantName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -12,19 +12,20 @@ function Register() {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", {
-        restaurantName,
+      const res = await axios.post("http://localhost:5000/api/auth/register", {
+        username,   // 🔥 ON ENVOIE username
         email,
         password,
       });
 
-      setSuccess("Compte créé ! Tu peux maintenant te connecter.");
+      setSuccess("Compte créé !");
       setError("");
+      console.log(res.data);
 
     } catch (err) {
-      setError("Erreur lors de l'inscription");
+      console.error("ERREUR BACKEND :", err.response?.data); // 🔥 IMPORTANT
+      setError(err.response?.data?.message || "Erreur inscription");
       setSuccess("");
-      console.error(err);
     }
   };
 
@@ -36,37 +37,31 @@ function Register() {
       {success && <p style={{ color: "green" }}>{success}</p>}
 
       <form onSubmit={handleSubmit}>
-        <div>
-          <input
-            type="text"
-            placeholder="Nom du restaurant"
-            value={restaurantName}
-            onChange={(e) => setRestaurantName(e.target.value)}
-            required
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Nom du restaurant"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
 
-        <div>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-        <div>
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-        <button type="submit" className="btn-primary">Créer un compte</button>
+        <button type="submit">Créer un compte</button>
       </form>
     </div>
   );
