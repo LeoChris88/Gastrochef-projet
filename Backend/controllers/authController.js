@@ -93,7 +93,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        restaurantName: user.restaurantName,
+        username: user.username,
         email: user.email
       }
     });
