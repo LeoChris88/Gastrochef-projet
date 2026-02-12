@@ -1,44 +1,47 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import "../Styles/Lab.css";
+
+const ingredientsList = [
+  "Tomate",
+  "Mozzarella",
+  "Basilic",
+  "Oeuf",
+  "Lardon",
+  "Pâtes",
+  "Pain",
+  "Oignon",
+  "Bouillon",
+  "Parmesan"
+];
 
 function Lab() {
-  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [grid, setGrid] = useState(Array(9).fill(null));
   const [message, setMessage] = useState("");
   const [recipes, setRecipes] = useState([]);
 
-  // ⚠️ Doivent correspondre EXACTEMENT aux noms en base
-  const ingredients = [
-    "tomate",
-    "mozzarella",
-    "basilic",
-    "oeuf",
-    "sel",
-    "poivre",
-    "pâtes",
-    "lardons",
-    "parmesan",
-    "pain",
-    "ail",
-    "huile d'olive",
-    "oignon",
-    "bouillon",
-    "gruyère"
-  ];
-
   const token = localStorage.getItem("token");
 
-  const config = {
-    headers: { Authorization: `Bearer ${token}` }
+  // Drag start
+  const handleDragStart = (ingredient) => {
+    window.draggedIngredient = ingredient;
   };
 
-  const addIngredient = (ingredient) => {
-    setSelectedIngredients([...selectedIngredients, ingredient]);
+  // Drop into a cell
+  const handleDrop = (index) => {
+    const newGrid = [...grid];
+    newGrid[index] = window.draggedIngredient;
+    setGrid(newGrid);
   };
 
-  // 🧪 TESTER RECETTE
+  const allowDrop = (e) => e.preventDefault();
+
+  // Tester recette
   const testRecipe = async () => {
+    const selectedIngredients = grid.filter(Boolean);
+
     if (selectedIngredients.length === 0) {
-      setMessage("Ajoute au moins un ingrédient !");
+      setMessage("Ajoute des ingrédients dans la grille !");
       return;
     }
 
@@ -46,24 +49,22 @@ function Lab() {
       const res = await axios.post(
         "http://localhost:5000/api/recipes/test",
         { ingredients: selectedIngredients },
-        config
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setMessage(res.data.message);
-      setSelectedIngredients([]);
+      setGrid(Array(9).fill(null));
       fetchRecipes();
     } catch (err) {
-      console.error(err.response?.data);
-      setMessage(err.response?.data?.message || "❌ Erreur pendant le test");
+      setMessage("❌ Aucune recette trouvée");
     }
   };
 
-  // 📖 RECETTES DÉCOUVERTES
   const fetchRecipes = async () => {
     try {
       const res = await axios.get(
         "http://localhost:5000/api/recipes/discovered",
-        config
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setRecipes(res.data);
     } catch (err) {
@@ -76,45 +77,55 @@ function Lab() {
   }, []);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="lab-container">
       <h2>🧪 Laboratoire</h2>
 
-      <h3>🥕 Ingrédients disponibles</h3>
-      {ingredients.map((ing) => (
-        <button
-          key={ing}
-          onClick={() => addIngredient(ing)}
-          style={{ margin: "5px" }}
-        >
-          {ing}
-        </button>
-      ))}
+      <h3>🥕 Ingrédients</h3>
+      <div className="ingredients-bar">
+        {ingredientsList.map((ing) => (
+          <div
+            key={ing}
+            className="ingredient"
+            draggable
+            onDragStart={() => handleDragStart(ing)}
+          >
+            {ing}
+          </div>
+        ))}
+      </div>
 
-      <h3>🧺 Ta combinaison</h3>
-      <p>
-        {selectedIngredients.length > 0
-          ? selectedIngredients.join(" + ")
-          : "Aucun ingrédient sélectionné"}
-      </p>
+      <h3>🧱 Table de Craft</h3>
+      <div className="craft-grid">
+        {grid.map((cell, index) => (
+          <div
+            key={index}
+            className="craft-cell"
+            onDrop={() => handleDrop(index)}
+            onDragOver={allowDrop}
+          >
+            {cell}
+          </div>
+        ))}
+      </div>
 
-      <button onClick={testRecipe} style={{ marginTop: "10px" }}>
+      <button className="test-btn" onClick={testRecipe}>
         Tester la recette
       </button>
 
-      <h3 style={{ marginTop: "20px" }}>{message}</h3>
+      <h3 className="message">{message}</h3>
 
       <hr />
 
       <h3>📖 Recettes découvertes</h3>
       {recipes.length === 0 ? (
-        <p>Aucune recette découverte pour l’instant</p>
+        <p>Aucune recette découverte</p>
       ) : (
         <ul>
-          {recipes.map((recipe) => (
-            <li key={recipe._id}>{recipe.name}</li>
+          {recipes.map((r) => (
+            <li key={r._id}>{r.name}</li>
           ))}
         </ul>
-      )}
+        )}
     </div>
   );
 }

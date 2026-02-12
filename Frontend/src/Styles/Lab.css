@@ -1,0 +1,57 @@
+.lab-container {
+  padding: 20px;
+  color: white;
+  text-align: center;
+}
+
+.ingredients-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ingredient {
+  background: linear-gradient(45deg, #ff9800, #ff5722);
+  color: white; /* 🔥 couleur du texte */
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: grab;
+  font-weight: bold;
+}
+
+.craft-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  grid-template-rows: repeat(3, 80px);
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.craft-cell {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px dashed #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #00e5ff;
+}
+
+.test-btn {
+  background: #00c853;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.message {
+  margin-top: 15px;
+  font-size: 18px;
+  color: #ffd600;
+}
