@@ -6,17 +6,36 @@ function Lab() {
   const [message, setMessage] = useState("");
   const [recipes, setRecipes] = useState([]);
 
-  // Liste d’ingrédients dispo (MVP = en dur côté front)
-  const ingredients = ["Tomate", "Fromage", "Pâte", "Poulet", "Salade"];
+  // ⚠️ Doivent correspondre EXACTEMENT aux noms en base
+  const ingredients = [
+    "tomate",
+    "mozzarella",
+    "basilic",
+    "oeuf",
+    "sel",
+    "poivre",
+    "pâtes",
+    "lardons",
+    "parmesan",
+    "pain",
+    "ail",
+    "huile d'olive",
+    "oignon",
+    "bouillon",
+    "gruyère"
+  ];
 
   const token = localStorage.getItem("token");
 
-  // Ajouter un ingrédient à la combinaison
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+
   const addIngredient = (ingredient) => {
     setSelectedIngredients([...selectedIngredients, ingredient]);
   };
 
-  // Tester la recette
+  // 🧪 TESTER RECETTE
   const testRecipe = async () => {
     if (selectedIngredients.length === 0) {
       setMessage("Ajoute au moins un ingrédient !");
@@ -25,26 +44,26 @@ function Lab() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/lab/test",
+        "http://localhost:5000/api/recipes/test",
         { ingredients: selectedIngredients },
-        { headers: { Authorization: `Bearer ${token}` } }
+        config
       );
 
       setMessage(res.data.message);
       setSelectedIngredients([]);
-      fetchRecipes(); // refresh livre de recettes
+      fetchRecipes();
     } catch (err) {
-      setMessage("❌ Erreur pendant le test");
-      console.error(err);
+      console.error(err.response?.data);
+      setMessage(err.response?.data?.message || "❌ Erreur pendant le test");
     }
   };
 
-  // Récupérer recettes découvertes
+  // 📖 RECETTES DÉCOUVERTES
   const fetchRecipes = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/recipes/my",
-        { headers: { Authorization: `Bearer ${token}` } }
+        "http://localhost:5000/api/recipes/discovered",
+        config
       );
       setRecipes(res.data);
     } catch (err) {
