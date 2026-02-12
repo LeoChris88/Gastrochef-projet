@@ -1,18 +1,12 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
 import "../Styles/Lab.css";
 
 const ingredientsList = [
-  "Tomate",
-  "Mozzarella",
-  "Basilic",
-  "Oeuf",
-  "Lardon",
-  "Pâtes",
-  "Pain",
-  "Oignon",
-  "Bouillon",
-  "Parmesan"
+  "Tomate", "Mozzarella", "Basilic",
+  "Oeuf", "Sel", "Pâtes", "Poivre",
+  "Pain", "Oignon", "Bouillon", "Parmesan"
 ];
 
 function Lab() {
@@ -20,14 +14,20 @@ function Lab() {
   const [message, setMessage] = useState("");
   const [recipes, setRecipes] = useState([]);
 
+  // SERVICE
+  const [socket, setSocket] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [serviceStarted, setServiceStarted] = useState(false);
+  const [satisfaction, setSatisfaction] = useState(20);
+
   const token = localStorage.getItem("token");
 
-  // Drag start
+  /* ================= LAB ================= */
+
   const handleDragStart = (ingredient) => {
     window.draggedIngredient = ingredient;
   };
 
-  // Drop into a cell
   const handleDrop = (index) => {
     const newGrid = [...grid];
     newGrid[index] = window.draggedIngredient;
@@ -36,7 +36,6 @@ function Lab() {
 
   const allowDrop = (e) => e.preventDefault();
 
-  // Tester recette
   const testRecipe = async () => {
     const selectedIngredients = grid.filter(Boolean);
 
@@ -55,7 +54,7 @@ function Lab() {
       setMessage(res.data.message);
       setGrid(Array(9).fill(null));
       fetchRecipes();
-    } catch (err) {
+    } catch {
       setMessage("❌ Aucune recette trouvée");
     }
   };
@@ -72,14 +71,97 @@ function Lab() {
     }
   };
 
+  /* ================= SERVICE ================= */
+
+  const startService = async () => {
+    try {
+      // 🔄 Reset recettes côté serveur
+      await axios.post(
+        "http://localhost:5000/api/user/reset-recipes",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setRecipes([]);
+
+      const newSocket = io("http://localhost:5000", {
+        auth: { token }
+      });
+
+      setSocket(newSocket);
+      setServiceStarted(true);
+
+      newSocket.on("authenticated", (data) => {
+        setSatisfaction(data.satisfaction);
+      });
+
+      newSocket.on("new-order", (order) => {
+        setOrders((prev) => [...prev, order]);
+      });
+
+      newSocket.on("satisfaction-update", (data) => {
+        setSatisfaction(data.satisfaction);
+      });
+
+      newSocket.on("order-result", ({ orderId, status, message, satisfaction }) => {
+        setOrders((prev) => prev.filter((o) => o.orderId !== orderId));
+        setMessage(message);
+        setSatisfaction(satisfaction);
+      });
+
+      newSocket.on("order-rejected", ({ orderId }) => {
+        setOrders((prev) => prev.filter(o => o.orderId !== orderId));
+      });
+
+      newSocket.emit("start-service");
+    } catch (error) {
+      console.error("Erreur start service:", error);
+    }
+  };
+
+  const serveOrder = (orderId) => {
+    socket.emit("process-order", { orderId, action: "serve" });
+  };
+
+  /* ================= INIT ================= */
+
   useEffect(() => {
     fetchRecipes();
   }, []);
+
+  /* ================= UI ================= */
 
   return (
     <div className="lab-container">
       <h2>🧪 Laboratoire</h2>
 
+      {!serviceStarted && (
+        <button className="start-btn" onClick={startService}>
+          🚀 Démarrer le service
+        </button>
+      )}
+
+      {serviceStarted && (
+        <>
+          <h3>⭐ Satisfaction : {satisfaction}</h3>
+
+          <div className="orders">
+            <h3>📦 Commandes en cours</h3>
+            {orders.map(order => (
+              <div key={order.orderId} className="order-card">
+                <strong>{order.recipe.name}</strong>
+                <button onClick={() => serveOrder(order.orderId)}>
+                  Servir
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <hr />
+
+      {/* LAB TOUJOURS ACTIF */}
       <h3>🥕 Ingrédients</h3>
       <div className="ingredients-bar">
         {ingredientsList.map((ing) => (
@@ -125,7 +207,7 @@ function Lab() {
             <li key={r._id}>{r.name}</li>
           ))}
         </ul>
-        )}
+      )}
     </div>
   );
 }

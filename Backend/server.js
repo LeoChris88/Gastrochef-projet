@@ -34,4 +34,7 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Serveur lancé sur le port ${PORT}`));
+
+server.listen(PORT, () => {
+  console.log(`Serveur + Socket.io lancés sur le port ${PORT}`);
+});

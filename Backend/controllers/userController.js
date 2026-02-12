@@ -73,3 +73,18 @@ exports.getStats = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la récupération des statistiques' });
   }
 };
+
+exports.resetDiscoveredRecipes = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { $set: { discoveredRecipes: [] } },
+      { new: true }
+    );
+
+    res.json({ message: "Recettes réinitialisées" });
+  } catch (error) {
+    console.error("Erreur resetDiscoveredRecipes:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
