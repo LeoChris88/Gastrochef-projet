@@ -1,200 +1,74 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { io } from "socket.io-client";
+import { useState } from "react";
 import "../Styles/Lab.css";
 
+import CraftTable from "../components/CraftTable";
+import OrdersPanel from "../components/OrdersPanel";
+import GameOver from "../components/GameOver";
+
+import { useRecipes } from "../hooks/useRecipes";
+import { useService } from "../hooks/useService";
+import { useTimer } from "../hooks/useTimer";
+
 const ingredientsList = [
-  "Tomate", "Mozzarella", "Basilic",
-  "Oeuf", "Sel", "Pâtes", "Poivre",
-  "Pain", "Oignon", "Bouillon", "Parmesan"
+  "Tomate","Mozzarella","Basilic",
+  "Oeuf","Sel","Pâtes","Poivre",
+  "Pain","Oignon","Bouillon","Parmesan","gruyère"
 ];
 
 function Lab() {
-  const [grid, setGrid] = useState(Array(9).fill(null));
-  const [message, setMessage] = useState("");
-  const [recipes, setRecipes] = useState([]);
-
-  // SERVICE
-  const [socket, setSocket] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [serviceStarted, setServiceStarted] = useState(false);
-  const [satisfaction, setSatisfaction] = useState(20);
-
   const token = localStorage.getItem("token");
+  const [grid, setGrid] = useState(Array(9).fill(null));
 
-  /* ================= LAB ================= */
+  const { recipes, message, testRecipe } = useRecipes(token);
 
-  const handleDragStart = (ingredient) => {
-    window.draggedIngredient = ingredient;
+  const {
+    orders,
+    satisfaction,
+    serviceStarted,
+    startService,
+    serveOrder,
+    stopService,
+    setOrders,
+  } = useService(token);
+
+  useTimer(serviceStarted, setOrders);
+
+  const handleRestart = () => {
+    stopService();
   };
 
-  const handleDrop = (index) => {
-    const newGrid = [...grid];
-    newGrid[index] = window.draggedIngredient;
-    setGrid(newGrid);
-  };
-
-  const allowDrop = (e) => e.preventDefault();
-
-  const testRecipe = async () => {
-    const selectedIngredients = grid.filter(Boolean);
-
-    if (selectedIngredients.length === 0) {
-      setMessage("Ajoute des ingrédients dans la grille !");
-      return;
-    }
-
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/recipes/test",
-        { ingredients: selectedIngredients },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setMessage(res.data.message);
-      setGrid(Array(9).fill(null));
-      fetchRecipes();
-    } catch {
-      setMessage("❌ Aucune recette trouvée");
-    }
-  };
-
-  const fetchRecipes = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/recipes/discovered",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setRecipes(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  /* ================= SERVICE ================= */
-
-  const startService = async () => {
-    try {
-      // 🔄 Reset recettes côté serveur
-      await axios.post(
-        "http://localhost:5000/api/user/reset-recipes",
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setRecipes([]);
-
-      const newSocket = io("http://localhost:5000", {
-        auth: { token }
-      });
-
-      setSocket(newSocket);
-      setServiceStarted(true);
-
-      newSocket.on("authenticated", (data) => {
-        setSatisfaction(data.satisfaction);
-      });
-
-      newSocket.on("new-order", (order) => {
-        setOrders((prev) => [...prev, order]);
-      });
-
-      newSocket.on("satisfaction-update", (data) => {
-        setSatisfaction(data.satisfaction);
-      });
-
-      newSocket.on("order-result", ({ orderId, status, message, satisfaction }) => {
-        setOrders((prev) => prev.filter((o) => o.orderId !== orderId));
-        setMessage(message);
-        setSatisfaction(satisfaction);
-      });
-
-      newSocket.on("order-rejected", ({ orderId }) => {
-        setOrders((prev) => prev.filter(o => o.orderId !== orderId));
-      });
-
-      newSocket.emit("start-service");
-    } catch (error) {
-      console.error("Erreur start service:", error);
-    }
-  };
-
-  const serveOrder = (orderId) => {
-    socket.emit("process-order", { orderId, action: "serve" });
-  };
-
-  /* ================= INIT ================= */
-
-  useEffect(() => {
-    fetchRecipes();
-  }, []);
-
-  /* ================= UI ================= */
+  if (satisfaction <= 0 && serviceStarted) {
+    return <GameOver onRestart={handleRestart} />;
+  }
 
   return (
     <div className="lab-container">
       <h2>🧪 Laboratoire</h2>
 
       {!serviceStarted && (
-        <button className="start-btn" onClick={startService}>
+        <button onClick={startService}>
           🚀 Démarrer le service
         </button>
       )}
 
       {serviceStarted && (
-        <>
-          <h3>⭐ Satisfaction : {satisfaction}</h3>
-
-          <div className="orders">
-            <h3>📦 Commandes en cours</h3>
-            {orders.map(order => (
-              <div key={order.orderId} className="order-card">
-                <strong>{order.recipe.name}</strong>
-                <button onClick={() => serveOrder(order.orderId)}>
-                  Servir
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
+        <OrdersPanel
+          orders={orders}
+          serveOrder={serveOrder}
+          satisfaction={satisfaction}
+        />
       )}
 
       <hr />
 
-      {/* LAB TOUJOURS ACTIF */}
-      <h3>🥕 Ingrédients</h3>
-      <div className="ingredients-bar">
-        {ingredientsList.map((ing) => (
-          <div
-            key={ing}
-            className="ingredient"
-            draggable
-            onDragStart={() => handleDragStart(ing)}
-          >
-            {ing}
-          </div>
-        ))}
-      </div>
+      <CraftTable
+        grid={grid}
+        setGrid={setGrid}
+        ingredients={ingredientsList}
+        onTestRecipe={testRecipe}
+      />
 
-      <h3>🧱 Table de Craft</h3>
-      <div className="craft-grid">
-        {grid.map((cell, index) => (
-          <div
-            key={index}
-            className="craft-cell"
-            onDrop={() => handleDrop(index)}
-            onDragOver={allowDrop}
-          >
-            {cell}
-          </div>
-        ))}
-      </div>
-
-      <button className="test-btn" onClick={testRecipe}>
-        Tester la recette
-      </button>
-
-      <h3 className="message">{message}</h3>
+      <h3>{message}</h3>
 
       <hr />
 
