@@ -19,7 +19,12 @@ function Lab() {
   const token = localStorage.getItem("token");
   const [grid, setGrid] = useState(Array(9).fill(null));
 
-  const { recipes, message, testRecipe } = useRecipes(token);
+  const {
+    recipes,
+    message,
+    testRecipe,
+    clearRecipes,
+  } = useRecipes(token);
 
   const {
     orders,
@@ -33,10 +38,19 @@ function Lab() {
 
   useTimer(serviceStarted, setOrders);
 
-  const handleRestart = () => {
-    stopService();
+  // 🔥 Gestion démarrage propre
+  const handleStartService = async () => {
+    clearRecipes();       // Reset frontend
+    await startService(); // Reset backend + socket
   };
 
+  const handleRestart = () => {
+    stopService();
+    clearRecipes();
+    setGrid(Array(9).fill(null));
+  };
+
+  // 🔥 GAME OVER
   if (satisfaction <= 0 && serviceStarted) {
     return <GameOver onRestart={handleRestart} />;
   }
@@ -46,7 +60,7 @@ function Lab() {
       <h2>🧪 Laboratoire</h2>
 
       {!serviceStarted && (
-        <button onClick={startService}>
+        <button onClick={handleStartService}>
           🚀 Démarrer le service
         </button>
       )}

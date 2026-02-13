@@ -5,7 +5,7 @@ const connectDB = require('../config/db');
 
 const recipes = [
   { name: "Salade Caprese", ingredients: ["tomate", "mozzarella", "basilic"] },
-  { name: "Omelette", ingredients: ["oeuf", "sel", "poivre"] },
+  { name: "Omelette ", ingredients: ["oeuf", "sel", "poivre"] },
   { name: "Pâtes Carbonara", ingredients: ["pâtes", "lardons", "oeuf", "parmesan"] },
   { name: "Bruschetta", ingredients: ["pain", "tomate", "ail", "huile d'olive"] },
   { name: "Soupe à l'oignon", ingredients: ["oignon", "bouillon", "pain", "gruyère"] }

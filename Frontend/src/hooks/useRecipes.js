@@ -29,9 +29,20 @@ export const useRecipes = (token) => {
     }
   };
 
+  // 🔥 AJOUT IMPORTANT
+  const clearRecipes = () => {
+    setRecipes([]);
+    setMessage("");
+  };
+
   useEffect(() => {
     fetchRecipes();
   }, []);
 
-  return { recipes, message, testRecipe, setMessage };
+  return {
+    recipes,
+    message,
+    testRecipe,
+    clearRecipes,
+  };
 };
