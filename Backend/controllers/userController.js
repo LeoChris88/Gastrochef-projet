@@ -1,7 +1,6 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
 
-// Récupérer le profil utilisateur
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
@@ -19,7 +18,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Récupérer l'historique des commandes
 exports.getOrderHistory = async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.userId })
@@ -34,7 +32,6 @@ exports.getOrderHistory = async (req, res) => {
   }
 };
 
-// Statistiques du joueur
 exports.getStats = async (req, res) => {
   try {
     const user = await User.findById(req.userId);

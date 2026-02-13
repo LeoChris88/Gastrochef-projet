@@ -10,7 +10,7 @@ const orderSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, required: true },
-  timeLimit: { type: Number, required: true }, // En secondes
+  timeLimit: { type: Number, required: true },
   completedAt: { type: Date }
 });
 

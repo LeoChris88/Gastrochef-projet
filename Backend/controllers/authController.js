@@ -4,87 +4,60 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
-    console.log('Données reçues:', req.body);
-    
-    const { username, restaurantName, email, password } = req.body;
-    const finalUsername = username || restaurantName;
+    const { restaurantName, email, password } = req.body; // ⬅️ restaurantName
 
-    console.log('Variables extraites:', { finalUsername, email, password });
-
-    if (!finalUsername || !email || !password) {
-      console.log('Validation échouée');
-      return res.status(400).json({ 
-        message: "Tous les champs sont requis",
-        received: req.body
-      });
+    if (!restaurantName || !email || !password) {
+      return res.status(400).json({ message: 'Tous les champs sont requis' });
     }
 
-    console.log('Validation OK, recherche utilisateur existant...');
-    
-    let user = await User.findOne({ email });
-    
-    console.log('Résultat recherche:', user ? 'Utilisateur existe déjà' : 'Nouvel utilisateur');
-    
-    if (user) {
-      console.log('Utilisateur déjà existant');
-      return res.status(400).json({ message: "Cet utilisateur existe déjà" });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
 
-    console.log('Hash du mot de passe...');
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    console.log('Création de l\'utilisateur...');
-    user = new User({
-      username: finalUsername,
+    const user = await User.create({
+      restaurantName, // ⬅️ restaurantName
       email,
       password: hashedPassword
-    }); 
+    });
 
-    console.log('Sauvegarde en base...');
-    await user.save();
-
-    console.log('Génération du token...');
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-    console.log('Inscription réussie !');
-    res.status(201).json({ 
-      token, 
-      user: { 
-        id: user._id, 
-        username: user.username,
-        email: user.email
-      } 
+    res.status(201).json({
+      token,
+      user: {
+        _id: user._id,
+        restaurantName: user.restaurantName,
+        email: user.email,
+        reputation: user.reputation,
+        satisfaction: user.satisfaction,
+        treasury: user.treasury
+      }
     });
   } catch (error) {
-    console.error('ERREUR COMPLÈTE:', error);
-    res.status(500).json({ 
-      message: "Erreur serveur lors de l'inscription",
-      error: error.message 
-    });
+    console.error('Erreur register:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
   }
 };
 
 exports.login = async (req, res) => {
   try {
-    console.log('Login - Données reçues:', req.body);
-    
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ 
-        message: "Email et mot de passe requis" 
-      });
+      return res.status(400).json({ message: 'Email et mot de passe requis' });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+      return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+      return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
@@ -92,16 +65,16 @@ exports.login = async (req, res) => {
     res.json({
       token,
       user: {
-        id: user._id,
-        username: user.username,
-        email: user.email
+        _id: user._id,
+        restaurantName: user.restaurantName,
+        email: user.email,
+        reputation: user.reputation,
+        satisfaction: user.satisfaction,
+        treasury: user.treasury
       }
     });
   } catch (error) {
     console.error('Erreur login:', error);
-    res.status(500).json({ 
-      message: 'Erreur serveur lors de la connexion',
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Erreur serveur' });
   }
 };
