@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
-    const { restaurantName, email, password } = req.body; // ⬅️ restaurantName
+    const { restaurantName, email, password } = req.body;
 
     if (!restaurantName || !email || !password) {
       return res.status(400).json({ message: 'Tous les champs sont requis' });
@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      restaurantName, // ⬅️ restaurantName
+      restaurantName,
       email,
       password: hashedPassword
     });

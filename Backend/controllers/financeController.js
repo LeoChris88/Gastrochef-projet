@@ -106,7 +106,7 @@ exports.getFinancialStats = async (req, res) => {
   }
 };
 
-// Créer une transaction (utilitaire interne)
+// Créer une transaction
 exports.createTransaction = async (userId, type, category, amount, description, relatedOrder = null, relatedRecipe = null) => {
   try {
     const transaction = await Transaction.create({

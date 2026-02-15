@@ -38,63 +38,63 @@ function Lab() {
 
   useTimer(serviceStarted, setOrders);
 
-  // 🔥 Gestion démarrage propre
-  const handleStartService = async () => {
-    clearRecipes();       // Reset frontend
-    await startService(); // Reset backend + socket
-  };
-
   const handleRestart = () => {
     stopService();
-    clearRecipes();
-    setGrid(Array(9).fill(null));
+    setOrders([]);
   };
 
-  // 🔥 GAME OVER
   if (satisfaction <= 0 && serviceStarted) {
     return <GameOver onRestart={handleRestart} />;
   }
 
   return (
     <div className="lab-container">
-      <h2>🧪 Laboratoire</h2>
+      <section className="service-section">
+        <h2 className="section-title">🧪 LABORATOIRE</h2>
+        {!serviceStarted ? (
+          <button onClick={startService} className="start-button">
+            🚀 Démarrer le service
+          </button>
+        ) : null}
+      </section>
 
-      {!serviceStarted && (
-        <button onClick={handleStartService}>
-          🚀 Démarrer le service
-        </button>
-      )}
+      <hr />
+
+      <section className="craft-section">
+        <h3 className="section-subtitle">🍊 INGRÉDIENTS</h3>
+        <CraftTable
+          grid={grid}
+          setGrid={setGrid}
+          ingredients={ingredientsList}
+          onTestRecipe={testRecipe}
+        />
+        <h3>{message}</h3>
+      </section>
+
+      <hr />
+
+      <section className="recipes-section">
+        <h3 className="section-subtitle">📚 RECETTES DÉCOUVERTES</h3>
+        {!recipes || !Array.isArray(recipes) || recipes.length === 0 ? (
+          <p>Aucune recette découverte</p>
+        ) : (
+          <ul>
+            {recipes.map((r) => (
+              <li key={r._id}>{r.name}</li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {serviceStarted && (
-        <OrdersPanel
-          orders={orders}
-          serveOrder={serveOrder}
-          satisfaction={satisfaction}
-        />
-      )}
-
-      <hr />
-
-      <CraftTable
-        grid={grid}
-        setGrid={setGrid}
-        ingredients={ingredientsList}
-        onTestRecipe={testRecipe}
-      />
-
-      <h3>{message}</h3>
-
-      <hr />
-
-      <h3>📖 Recettes découvertes</h3>
-      {recipes.length === 0 ? (
-        <p>Aucune recette découverte</p>
-      ) : (
-        <ul>
-          {recipes.map((r) => (
-            <li key={r._id}>{r.name}</li>
-          ))}
-        </ul>
+        <>
+          <hr />
+          <OrdersPanel
+            orders={orders}
+            serveOrder={serveOrder}
+            satisfaction={satisfaction}
+          />
+        </>
       )}
     </div>
   );
